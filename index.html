@@ -3,612 +3,677 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Neon Snake Arcade</title>
+  <title>Francesco & Giulia</title>
   <style>
     :root {
-      --bg-color: #0b0f19;
-      --panel-bg: #131b2e;
-      --accent: #00f59b;
-      --accent-dark: #00b874;
-      --apple: #ff3b5c;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --btn-bg: #1e293b;
-      --btn-active: #334155;
+      --bg: #000000;
+      --card-bg: rgba(28, 28, 30, 0.75);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f5f5f7;
+      --text-muted: #86868b;
+      --accent: #ff3b30;
+      --accent-gradient: linear-gradient(135deg, #ff3b30, #ff9500);
+      --btn-bg: rgba(255, 255, 255, 0.08);
+      --btn-hover: rgba(255, 255, 255, 0.15);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
       min-height: 100vh;
+      padding: 24px 16px 60px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 16px;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 59, 48, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 113, 227, 0.15) 0%, transparent 40%);
     }
 
-    .game-container {
-      background: var(--panel-bg);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      max-width: 460px;
+    .container {
+      max-width: 480px;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
+    /* Header & Cuori */
     header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      text-align: center;
+      padding: 20px 0 10px 0;
+    }
+
+    .hearts-container {
+      font-size: 1.5rem;
+      letter-spacing: 6px;
+      margin-bottom: 8px;
+      animation: pulseHeart 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseHeart {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 1; text-shadow: 0 0 15px rgba(255, 59, 48, 0.6); }
     }
 
     h1 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      background: linear-gradient(90deg, #00f59b, #00d2ff);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
     }
 
-    .scores {
-      display: flex;
-      gap: 12px;
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
 
-    .score-box {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 6px 14px;
-      text-align: center;
-      min-width: 78px;
+    /* Card Stile Apple */
+    .apple-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
 
-    .score-label {
-      font-size: 0.7rem;
+    /* Contatore d'amore */
+    .counter-title {
+      font-size: 0.8rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--muted);
-    }
-
-    .score-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    #highScore {
-      color: #fbbf24;
-    }
-
-    .canvas-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 2px solid #1e293b;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
-      background: #090d16;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(9, 13, 22, 0.85);
-      backdrop-filter: blur(4px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
       text-align: center;
-      padding: 20px;
-      transition: opacity 0.2s ease;
+      margin-bottom: 14px;
+      font-weight: 600;
     }
 
-    .overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
     }
 
-    .overlay h2 {
-      font-size: 1.8rem;
-      margin-bottom: 8px;
-      color: var(--text);
+    .time-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 14px;
+      padding: 10px 4px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
     }
 
-    .overlay p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 20px;
+    .time-num {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: #051b11;
-      font-weight: 800;
-      font-size: 1rem;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 28px;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0, 245, 155, 0.35);
-      transition: transform 0.1s ease, filter 0.15s ease;
+    .time-lbl {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 2px;
     }
 
-    .btn-primary:hover {
-      filter: brightness(1.08);
-    }
-
-    .btn-primary:active {
-      transform: scale(0.96);
-    }
-
-    /* Controlli e pulsanti ben visibili */
-    .controls-area {
-      width: 100%;
-      margin-top: 18px;
+    /* Sezione Pulsanti Principali */
+    .menu-section {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 14px;
+      gap: 10px;
     }
 
-    .action-bar {
+    .btn-full {
+      width: 100%;
+      background: var(--btn-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-full:active { transform: scale(0.98); }
+    .btn-full:hover { background: var(--btn-hover); }
+
+    .btn-row {
       display: flex;
       gap: 10px;
-      width: 100%;
     }
 
-    .btn-secondary {
+    .btn-half {
       flex: 1;
       background: var(--btn-bg);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 10px;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 14px;
+      border-radius: 16px;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      text-align: center;
+      transition: background 0.2s, transform 0.1s;
     }
 
-    .btn-secondary:hover {
-      background: var(--btn-active);
-    }
+    .btn-half:active { transform: scale(0.98); }
+    .btn-half:hover { background: var(--btn-hover); }
+    .btn-half.active-tab { background: rgba(255, 59, 48, 0.2); border-color: rgba(255, 59, 48, 0.4); color: #ff6961; }
 
-    .dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 68px);
-      grid-template-rows: repeat(2, 60px);
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .dpad-btn {
-      background: var(--btn-bg);
-      border: 2px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
-      color: var(--text);
-      font-size: 1.4rem;
-      font-weight: bold;
+    /* Pulsante Aggiungi Evento */
+    .btn-add {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(255, 59, 48, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #0f172a;
-      transition: transform 0.08s, background 0.1s, border-color 0.1s;
-      touch-action: manipulation;
+      gap: 8px;
+      transition: filter 0.2s, transform 0.1s;
+    }
+    .btn-add:hover { filter: brightness(1.1); }
+    .btn-add:active { transform: scale(0.98); }
+
+    /* Lista Eventi */
+    .events-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
     }
 
-    .dpad-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+    .events-header h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
     }
 
-    .dpad-btn:active, .dpad-btn.pressed {
-      transform: translateY(3px);
-      box-shadow: 0 1px 0 #0f172a;
-      background: var(--btn-active);
-      border-color: var(--accent);
-      color: var(--accent);
+    .event-card {
+      background: rgba(20, 20, 22, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .btn-up { grid-column: 2; grid-row: 1; }
-    .btn-left { grid-column: 1; grid-row: 2; }
-    .btn-down { grid-column: 2; grid-row: 2; }
-    .btn-right { grid-column: 3; grid-row: 2; }
+    .event-card img.cover {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 12px;
+    }
 
-    .hint {
-      font-size: 0.78rem;
-      color: var(--muted);
+    .event-info h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .event-date {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .event-desc {
+      font-size: 0.9rem;
+      color: #d1d1d6;
+      line-height: 1.4;
+    }
+
+    .countdown-box {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.85Yrem;
+      font-weight: 600;
+      color: #ff9500;
+    }
+
+    .event-actions {
+      display: flex;
+      gap: 8px;
       margin-top: 4px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: var(--btn-bg);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .action-btn.danger { color: #ff453a; border-color: rgba(255,69,58,0.3); }
+    .action-btn.finished { background: #34c759; border: none; color: #000; font-weight: 700; }
+
+    /* Modali (Form Aggiunta e Conclusione) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: #1c1c1e;
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+    }
+
+    .modal-content h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .form-control {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      width: 100%;
+    }
+
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .badge-score {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(52, 199, 89, 0.15);
+      color: #34c759;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 1px solid rgba(52, 199, 89, 0.3);
     }
   </style>
 </head>
 <body>
 
-  <div class="game-container">
+  <div class="container">
     <header>
-      <h1>SNAKE</h1>
-      <div class="scores">
-        <div class="score-box">
-          <div class="score-label">Punti</div>
-          <div class="score-value" id="score">0</div>
-        </div>
-        <div class="score-box">
-          <div class="score-label">Record</div>
-          <div class="score-value" id="highScore">0</div>
-        </div>
-      </div>
+      <div class="hearts-container">❤️❤️❤️❤️❤️</div>
+      <h1>Francesco & Giulia</h1>
+      <div class="subtitle">Il nostro spazio speciale</div>
     </header>
 
-    <div class="canvas-wrapper">
-      <canvas id="gameCanvas" width="400" height="400"></canvas>
-      <div class="overlay" id="overlay">
-        <h2 id="overlayTitle">Pronto a giocare?</h2>
-        <p id="overlaySubtitle">Usa i tasti qui sotto o le frecce della tastiera</p>
-        <button class="btn-primary" id="startBtn">INIZIA PARTITA</button>
+    <!-- Contatore d'amore in tempo reale -->
+    <div class="apple-card">
+      <div class="counter-title">Insieme da</div>
+      <div class="time-grid" id="loveCounter">
+        <div class="time-box"><div class="time-num" id="cYears">0</div><div class="time-lbl">Anni</div></div>
+        <div class="time-box"><div class="time-num" id="cMonths">0</div><div class="time-lbl">Mesi</div></div>
+        <div class="time-box"><div class="time-num" id="cDays">0</div><div class="time-lbl">Giorni</div></div>
+        <div class="time-box"><div class="time-num" id="cHours">0</div><div class="time-lbl">Ore</div></div>
+        <div class="time-box"><div class="time-num" id="cMins">0</div><div class="time-lbl">Minuti</div></div>
+        <div class="time-box"><div class="time-num" id="cSecs">0</div><div class="time-lbl">Secondi</div></div>
       </div>
     </div>
 
-    <div class="controls-area">
-      <div class="action-bar">
-        <button class="btn-secondary" id="pauseBtn">⏸ Pausa</button>
-        <button class="btn-secondary" id="restartBtn">↻ Ricomincia</button>
+    <!-- Sezione Pulsanti Menu Principale -->
+    <div class="menu-section">
+      <button class="btn-full" id="btnAllEvents" onclick="setFilter('all')">
+        <span>Tutti i miei eventi</span>
+        <span id="countAll" style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:10px; font-size:0.8rem;">0</span>
+      </button>
+      <div class="btn-row">
+        <button class="btn-half active-tab" id="btnProgFilter" onclick="setFilter('program')">Eventi in programma</button>
+        <button class="btn-half" id="btnConcFilter" onclick="setFilter('concluded')">Eventi conclusi</button>
       </div>
+    </div>
 
-      <div class="dpad">
-        <button class="dpad-btn btn-up" data-dir="UP" aria-label="Su">▲</button>
-        <button class="dpad-btn btn-left" data-dir="LEFT" aria-label="Sinistra">◄</button>
-        <button class="dpad-btn btn-down" data-dir="DOWN" aria-label="Giù">▼</button>
-        <button class="dpad-btn btn-right" data-dir="RIGHT" aria-label="Destra">►</button>
+    <!-- Pulsante Aggiungi Evento -->
+    <button class="btn-add" onclick="openAddModal()">
+      <span>+ Aggiungi Nuovo Evento</span>
+    </button>
+
+    <!-- Lista Eventi Dinamica -->
+    <div class="events-header">
+      <h2 id="listTitle">Eventi in Programma</h2>
+    </div>
+    <div id="eventsList">
+      <!-- Gli eventi compaiono qui -->
+    </div>
+  </div>
+
+  <!-- MODALE AGGIUNGI EVENTO -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+      <h3>Nuovo Evento</h3>
+      <div class="form-group">
+        <label>Titolo Evento</label>
+        <input type="text" id="inputTitle" class="form-control" placeholder="Es. Viaggio a Parigi">
       </div>
+      <div class="form-group">
+        <label>Data e Ora</label>
+        <input type="datetime-local" id="inputDate" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <textarea id="inputDesc" class="form-control" placeholder="Cosa faremo..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Foto principale (Carica immagine)</label>
+        <input type="file" id="inputImage" class="form-control" accept="image/*">
+      </div>
+      <div class="modal-buttons">
+        <button class="action-btn" onclick="closeAddModal()">Annulla</button>
+        <button class="action-btn finished" onclick="saveNewEvent()">Salva Evento</button>
+      </div>
+    </div>
+  </div>
 
-      <div class="hint">Tastiera: Frecce direzionali o WASD • Spazio: Pausa</div>
+  <!-- MODALE CONCLUSIONE EVENTO (PAGELLA) -->
+  <div class="modal-overlay" id="finishModal">
+    <div class="modal-content">
+      <h3>Concludi Evento & Ricordi</h3>
+      <p style="font-size:0.85rem; color: var(--text-muted);">Inserisci i dettagli finali di questo momento speciale.</p>
+      <input type="hidden" id="finishEventId">
+      <div class="form-group">
+        <label>Foto Ricordo Principale</label>
+        <input type="file" id="finishImage" class="form-control" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Descrizione / Racconto dell'esperienza</label>
+        <textarea id="finishDesc" class="form-control" placeholder="Com'è andata? Emozioni..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Votazione (da 0 a 10): <span id="scoreVal" style="color:#34c759; font-weight:bold;">10</span></label>
+        <input type="range" id="finishScore" min="0" max="10" value="10" class="form-control" oninput="document.getElementById('scoreVal').innerText = this.value">
+      </div>
+      <div class="modal-buttons">
+        <button class="action-btn" onclick="closeFinishModal()">Annulla</button>
+        <button class="action-btn finished" onclick="submitFinishedEvent()">Salva Ricordo</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    // DATA D'INIZIO RELAZIONE (Modificala qui con la vostra data esatta, es: '2024-01-01T00:00:00')
+    const startDate = new Date('2025-01-01T00:00:00');
 
-    const scoreEl = document.getElementById('score');
-    const highScoreEl = document.getElementById('highScore');
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlayTitle');
-    const overlaySubtitle = document.getElementById('overlaySubtitle');
-    const startBtn = document.getElementById('startBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const restartBtn = document.getElementById('restartBtn');
+    function updateLoveCounter() {
+      const now = new Date();
+      let diff = now - startDate;
+      if (diff < 0) diff = 0;
 
-    const GRID_SIZE = 20;
-    const TILE_COUNT = canvas.width / GRID_SIZE;
+      const seconds = Math.floor(diff / 1000) % 60;
+      const minutes = Math.floor(diff / (1000 * 60)) % 60;
+      const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+      
+      // Calcolo approssimativo ma fluido di anni, mesi, giorni
+      const years = now.getFullYear() - startDate.getFullYear();
+      const months = (now.getMonth() - startDate.getMonth() + 12) % 12;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    let snake = [];
-    let apple = { x: 15, y: 15 };
-    let dx = 1;
-    let dy = 0;
-    let nextDx = 1;
-    let nextDy = 0;
+      document.getElementById('cYears').innerText = Math.max(0, now.getFullYear() - startDate.getFullYear() - (now.getMonth() < startDate.getMonth() || (now.getMonth() === startDate.getMonth() && now.getDate() < startDate.getDate()) ? 1 : 0));
+      document.getElementById('cMonths').innerText = Math.abs((now.getMonth() - startDate.getMonth() + 12) % 12);
+      document.getElementById('cDays').innerText = Math.floor(diff / (1000 * 60 * 60 * 24));
+      document.getElementById('cHours').innerText = hours;
+      document.getElementById('cMins').innerText = minutes;
+      document.getElementById('cSecs').innerText = seconds;
+    }
+    setInterval(updateLoveCounter, 1000);
+    updateLoveCounter();
 
-    let score = 0;
-    let highScore = parseInt(localStorage.getItem('snake_high_score')) || 0;
-    highScoreEl.textContent = highScore;
+    // GESTIONE EVENTI & LOCALSTORAGE
+    let events = JSON.parse(localStorage.getItem('couple_events')) || [];
+    let currentFilter = 'program'; // 'all', 'program', 'concluded'
 
-    let gameLoopId = null;
-    let gameSpeed = 125;
-    let isPaused = false;
-    let isGameOver = false;
-    let isRunning = false;
-
-    function initGame() {
-      snake = [
-        { x: 10, y: 10 },
-        { x: 9, y: 10 },
-        { x: 8, y: 10 }
-      ];
-      dx = 1;
-      dy = 0;
-      nextDx = 1;
-      nextDy = 0;
-      score = 0;
-      gameSpeed = 125;
-      isPaused = false;
-      isGameOver = false;
-      isRunning = true;
-
-      scoreEl.textContent = score;
-      pauseBtn.textContent = '⏸ Pausa';
-      overlay.classList.add('hidden');
-
-      spawnApple();
-      clearTimeout(gameLoopId);
-      runGameLoop();
+    function saveToStorage() {
+      localStorage.setItem('couple_events', JSON.stringify(events));
+      renderEvents();
     }
 
-    function spawnApple() {
-      let valid = false;
-      while (!valid) {
-        apple.x = Math.floor(Math.random() * TILE_COUNT);
-        apple.y = Math.floor(Math.random() * TILE_COUNT);
-        valid = !snake.some(segment => segment.x === apple.x && segment.y === apple.y);
-      }
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.getElementById('btnAllEvents').style.borderColor = filter === 'all' ? '#ff3b30' : 'var(--card-border)';
+      document.getElementById('btnProgFilter').className = 'btn-half ' + (filter === 'program' ? 'active-tab' : '');
+      document.getElementById('btnConcFilter').className = 'btn-half ' + (filter === 'concluded' ? 'active-tab' : '');
+      
+      const titles = { all: 'Tutti gli Eventi', program: 'Eventi in Programma', concluded: 'Eventi Conclusi' };
+      document.getElementById('listTitle').innerText = titles[filter];
+      renderEvents();
     }
 
-    function runGameLoop() {
-      if (!isRunning || isPaused || isGameOver) return;
+    function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+    function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
 
-      update();
-      draw();
+    function saveNewEvent() {
+      const title = document.getElementById('inputTitle').value;
+      const date = document.getElementById('inputDate').value;
+      const desc = document.getElementById('inputDesc').value;
+      const fileInput = document.getElementById('inputImage');
 
-      if (!isGameOver) {
-        gameLoopId = setTimeout(runGameLoop, gameSpeed);
-      }
-    }
-
-    function update() {
-      dx = nextDx;
-      dy = nextDy;
-
-      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-
-      // Collisione con i muri
-      if (head.x < 0 || head.x >= TILE_COUNT || head.y < 0 || head.y >= TILE_COUNT) {
-        endGame();
+      if (!title || !date) {
+        alert('Inserisci almeno titolo e data!');
         return;
       }
 
-      // Collisione con se stesso
-      if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-        endGame();
-        return;
-      }
-
-      snake.unshift(head);
-
-      // Controllo mela mangiata
-      if (head.x === apple.x && head.y === apple.y) {
-        score += 10;
-        scoreEl.textContent = score;
-
-        if (score > highScore) {
-          highScore = score;
-          highScoreEl.textContent = highScore;
-          localStorage.setItem('snake_high_score', highScore);
-        }
-
-        // Aumenta gradualmente la velocità
-        if (gameSpeed > 65) {
-          gameSpeed -= 2;
-        }
-
-        spawnApple();
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          createEventObj(title, date, desc, e.target.result);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
       } else {
-        snake.pop();
+        createEventObj(title, date, desc, '');
       }
     }
 
-    function drawGrid() {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= TILE_COUNT; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * GRID_SIZE, 0);
-        ctx.lineTo(i * GRID_SIZE, canvas.height);
-        ctx.stroke();
+    function createEventObj(title, date, desc, img) {
+      const newEv = {
+        id: Date.now(),
+        title,
+        date,
+        desc,
+        img,
+        status: 'program', // 'program' o 'concluded'
+        conclusion: { img: '', desc: '', score: 10 }
+      };
+      events.push(newEv);
+      closeAddModal();
+      saveToStorage();
+      // Reset form
+      document.getElementById('inputTitle').value = '';
+      document.getElementById('inputDate').value = '';
+      document.getElementById('inputDesc').value = '';
+      document.getElementById('inputImage').value = '';
+    }
 
-        ctx.beginPath();
-        ctx.moveTo(0, i * GRID_SIZE);
-        ctx.lineTo(canvas.width, i * GRID_SIZE);
-        ctx.stroke();
+    function deleteEvent(id) {
+      if (confirm('Vuoi eliminare questo evento?')) {
+        events = events.filter(ev => ev.id !== id);
+        saveToStorage();
       }
     }
 
-    function drawApple() {
-      const centerX = apple.x * GRID_SIZE + GRID_SIZE / 2;
-      const centerY = apple.y * GRID_SIZE + GRID_SIZE / 2;
-      const radius = GRID_SIZE / 2 - 2;
+    function openFinishModal(id) {
+      document.getElementById('finishEventId').value = id;
+      document.getElementById('finishModal').classList.add('open');
+    }
+    function closeFinishModal() { document.getElementById('finishModal').classList.remove('open'); }
 
-      ctx.save();
-      ctx.shadowColor = '#ff3b5c';
-      ctx.shadowBlur = 14;
+    function submitFinishedEvent() {
+      const id = Number(document.getElementById('finishEventId').value);
+      const desc = document.getElementById('finishDesc').value;
+      const score = document.getElementById('finishScore').value;
+      const fileInput = document.getElementById('finishImage');
 
-      // Corpo mela
-      ctx.fillStyle = '#ff3b5c';
-      ctx.beginPath();
-      ctx.arc(centerX, centerY + 1, radius, 0, Math.PI * 2);
-      ctx.fill();
+      const ev = events.find(e => e.id === id);
+      if (!ev) return;
 
-      // Riflesso lucido
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.beginPath();
-      ctx.arc(centerX - 2.5, centerY - 2, radius * 0.28, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Fogliolina verde
-      ctx.fillStyle = '#00f59b';
-      ctx.beginPath();
-      ctx.ellipse(centerX + 2, centerY - radius + 1, 4, 2, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          finalizeEventData(ev, desc, score, e.target.result);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        finalizeEventData(ev, desc, score, ev.img);
+      }
     }
 
-    function drawSnake() {
-      snake.forEach((segment, index) => {
-        const x = segment.x * GRID_SIZE;
-        const y = segment.y * GRID_SIZE;
-        const isHead = index === 0;
+    function finalizeEventData(ev, desc, score, img) {
+      ev.status = 'concluded';
+      ev.conclusion = { desc, score, img };
+      closeFinishModal();
+      saveToStorage();
+    }
 
-        ctx.save();
-        if (isHead) {
-          ctx.shadowColor = '#00f59b';
-          ctx.shadowBlur = 12;
-          ctx.fillStyle = '#00f59b';
+    function renderEvents() {
+      const listContainer = document.getElementById('eventsList');
+      listContainer.innerHTML = '';
+
+      let filtered = events;
+      if (currentFilter === 'program') filtered = events.filter(e => e.status === 'program');
+      if (currentFilter === 'concluded') filtered = events.filter(e => e.status === 'concluded');
+
+      // Ordinamento per data
+      filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+      document.getElementById('countAll').innerText = events.length;
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.9rem;">Nessun evento presente in questa sezione.</div>`;
+        return;
+      }
+
+      const now = new Date();
+
+      filtered.forEach(ev => {
+        const eventDate = new Date(ev.date);
+        const diff = eventDate - now;
+        const isPast = diff <= 0;
+
+        const card = document.createElement('div');
+        card.className = 'event-card';
+
+        let displayImage = ev.status === 'concluded' ? (ev.conclusion.img || ev.img) : ev.img;
+        let htmlContent = '';
+
+        if (displayImage) {
+          htmlContent += `<img src="${displayImage}" class="cover" alt="Foto evento">`;
+        }
+
+        htmlContent += `<div class="event-info">`;
+        htmlContent += `<h3>${ev.title}</h3>`;
+        htmlContent += `<div class="event-date">📅 ${new Date(ev.date).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' })}</div>`;
+        
+        if (ev.status === 'concluded') {
+          htmlContent += `<p class="event-desc"><strong>Racconto:</strong> ${ev.conclusion.desc || ev.desc}</p>`;
+          htmlContent += `<div style="margin-top:8px;"><span class="badge-score">Voto: ${ev.conclusion.score}/10 ⭐</span></div>`;
         } else {
-          // Sfumatura progressiva lungo il corpo
-          const ratio = Math.max(0.35, 1 - index / (snake.length + 5));
-          ctx.fillStyle = `rgba(0, 210, 140, ${ratio})`;
-        }
-
-        // Segmento arrotondato
-        const pad = isHead ? 1 : 2;
-        const size = GRID_SIZE - pad * 2;
-        ctx.beginPath();
-        ctx.roundRect(x + pad, y + pad, size, size, isHead ? 6 : 5);
-        ctx.fill();
-
-        // Occhi sulla testa orientati nella direzione di marcia
-        if (isHead) {
-          ctx.shadowBlur = 0;
-          ctx.fillStyle = '#051b11';
-          let eye1 = { x: x + 6, y: y + 6 };
-          let eye2 = { x: x + 14, y: y + 6 };
-
-          if (dx === 1) { // Destra
-            eye1 = { x: x + 14, y: y + 6 };
-            eye2 = { x: x + 14, y: y + 14 };
-          } else if (dx === -1) { // Sinistra
-            eye1 = { x: x + 6, y: y + 6 };
-            eye2 = { x: x + 6, y: y + 14 };
-          } else if (dy === 1) { // Giù
-            eye1 = { x: x + 6, y: y + 14 };
-            eye2 = { x: x + 14, y: y + 14 };
-          } else if (dy === -1) { // Su
-            eye1 = { x: x + 6, y: y + 6 };
-            eye2 = { x: x + 14, y: y + 6 };
+          htmlContent += `<p class="event-desc">${ev.desc}</p>`;
+          
+          if (!isPast) {
+            // Mostra countdown
+            const dDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const dHours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const dMins = Math.floor((diff / 1000 * 60) % 60);
+            htmlContent += `<div class="countdown-box" id="cd-${ev.id}">Mancano: ${dDays} giorni, ${dHours} ore e ${dMins} min</div>`;
+          } else {
+            htmlContent += `<div class="countdown-box" style="background:rgba(255, 149, 0, 0.15); color:#ff9500;">✨ Il momento è arrivato!</div>`;
           }
-
-          ctx.beginPath();
-          ctx.arc(eye1.x, eye1.y, 2.2, 0, Math.PI * 2);
-          ctx.arc(eye2.x, eye2.y, 2.2, 0, Math.PI * 2);
-          ctx.fill();
         }
-        ctx.restore();
+
+        htmlContent += `</div>`;
+
+        // Pulsanti azione
+        htmlContent += `<div class="event-actions">`;
+        if (ev.status === 'program') {
+          if (isPast) {
+            htmlContent += `<button class="action-btn finished" onclick="openFinishModal(${ev.id})">Finito ✔</button>`;
+          }
+          htmlContent += `<button class="action-btn danger" onclick="deleteEvent(${ev.id})">Elimina</button>`;
+        } else {
+          htmlContent += `<button class="action-btn danger" onclick="deleteEvent(${ev.id})">Elimina Ricordo</button>`;
+        }
+        htmlContent += `</div>`;
+
+        card.innerHTML = htmlContent;
+        listContainer.appendChild(card);
       });
     }
 
-    function draw() {
-      ctx.fillStyle = '#090d16';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawGrid();
-      drawApple();
-      drawSnake();
-    }
-
-    function endGame() {
-      isGameOver = true;
-      isRunning = false;
-      overlayTitle.textContent = 'Game Over!';
-      overlaySubtitle.textContent = `Hai totalizzato ${score} punti`;
-      startBtn.textContent = 'GIOCA ANCORA';
-      overlay.classList.remove('hidden');
-    }
-
-    function togglePause() {
-      if (!isRunning || isGameOver) return;
-      isPaused = !isPaused;
-      if (isPaused) {
-        pauseBtn.textContent = '▶ Riprendi';
-        overlayTitle.textContent = 'In Pausa';
-        overlaySubtitle.textContent = 'Premi Riprendi o Spazio per continuare';
-        startBtn.textContent = 'RIPRENDI';
-        overlay.classList.remove('hidden');
-      } else {
-        pauseBtn.textContent = '⏸ Pausa';
-        overlay.classList.add('hidden');
-        runGameLoop();
-      }
-    }
-
-    function changeDirection(dir) {
-      if (!isRunning || isPaused) return;
-      if (dir === 'UP' && dy !== 1) { nextDx = 0; nextDy = -1; }
-      if (dir === 'DOWN' && dy !== -1) { nextDx = 0; nextDy = 1; }
-      if (dir === 'LEFT' && dx !== 1) { nextDx = -1; nextDy = 0; }
-      if (dir === 'RIGHT' && dx !== -1) { nextDx = 1; nextDy = 0; }
-    }
-
-    // Eventi tastiera
-    document.addEventListener('keydown', (e) => {
-      const key = e.key;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
-        e.preventDefault();
-      }
-
-      if (key === 'ArrowUp' || key === 'w' || key === 'W') {
-        highlightBtn('UP');
-        changeDirection('UP');
-      } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
-        highlightBtn('DOWN');
-        changeDirection('DOWN');
-      } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
-        highlightBtn('LEFT');
-        changeDirection('LEFT');
-      } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
-        highlightBtn('RIGHT');
-        changeDirection('RIGHT');
-      } else if (key === ' ') {
-        togglePause();
-      }
-    });
-
-    function highlightBtn(dir) {
-      const btn = document.querySelector(`.dpad-btn[data-dir="${dir}"]`);
-      if (btn) {
-        btn.classList.add('pressed');
-        setTimeout(() => btn.classList.remove('pressed'), 120);
-      }
-    }
-
-    // Eventi tasti su schermo (click e touch)
-    document.querySelectorAll('.dpad-btn').forEach(btn => {
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        const dir = btn.getAttribute('data-dir');
-        changeDirection(dir);
-      });
-    });
-
-    startBtn.addEventListener('click', () => {
-      if (isPaused) {
-        togglePause();
-      } else {
-        initGame();
-      }
-    });
-
-    pauseBtn.addEventListener('click', togglePause);
-    restartBtn.addEventListener('click', initGame);
-
-    // Disegno iniziale anteprima
-    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-    draw();
+    // Aggiorna i countdown ogni minuto
+    setInterval(renderEvents, 60000);
+    renderEvents();
   </script>
 </body>
-</html>
+</html>     
