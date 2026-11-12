@@ -47,7 +47,6 @@
       gap: 20px;
     }
 
-    /* Header & Cuori */
     header {
       text-align: center;
       padding: 20px 0 10px 0;
@@ -80,7 +79,6 @@
       color: var(--text-muted);
     }
 
-    /* Card Stile Apple */
     .apple-card {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
@@ -91,7 +89,6 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
 
-    /* Contatore d'amore */
     .counter-title {
       font-size: 0.8rem;
       text-transform: uppercase;
@@ -129,7 +126,6 @@
       margin-top: 2px;
     }
 
-    /* Sezione Pulsanti Principali */
     .menu-section {
       display: flex;
       flex-direction: column;
@@ -178,7 +174,6 @@
     .btn-half:hover { background: var(--btn-hover); }
     .btn-half.active-tab { background: rgba(255, 59, 48, 0.2); border-color: rgba(255, 59, 48, 0.4); color: #ff6961; }
 
-    /* Pulsante Aggiungi Evento */
     .btn-add {
       background: var(--accent-gradient);
       color: white;
@@ -198,7 +193,6 @@
     .btn-add:hover { filter: brightness(1.1); }
     .btn-add:active { transform: scale(0.98); }
 
-    /* Lista Eventi */
     .events-header {
       display: flex;
       justify-content: space-between;
@@ -254,7 +248,7 @@
       border-radius: 10px;
       padding: 10px;
       text-align: center;
-      font-size: 0.85Yrem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: #ff9500;
     }
@@ -279,7 +273,6 @@
     .action-btn.danger { color: #ff453a; border-color: rgba(255,69,58,0.3); }
     .action-btn.finished { background: #34c759; border: none; color: #000; font-weight: 700; }
 
-    /* Modali (Form Aggiunta e Conclusione) */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -373,7 +366,6 @@
       <div class="subtitle">Il nostro spazio speciale</div>
     </header>
 
-    <!-- Contatore d'amore in tempo reale -->
     <div class="apple-card">
       <div class="counter-title">Insieme da</div>
       <div class="time-grid" id="loveCounter">
@@ -386,7 +378,6 @@
       </div>
     </div>
 
-    <!-- Sezione Pulsanti Menu Principale -->
     <div class="menu-section">
       <button class="btn-full" id="btnAllEvents" onclick="setFilter('all')">
         <span>Tutti i miei eventi</span>
@@ -398,21 +389,16 @@
       </div>
     </div>
 
-    <!-- Pulsante Aggiungi Evento -->
     <button class="btn-add" onclick="openAddModal()">
       <span>+ Aggiungi Nuovo Evento</span>
     </button>
 
-    <!-- Lista Eventi Dinamica -->
     <div class="events-header">
       <h2 id="listTitle">Eventi in Programma</h2>
     </div>
-    <div id="eventsList">
-      <!-- Gli eventi compaiono qui -->
-    </div>
+    <div id="eventsList"></div>
   </div>
 
-  <!-- MODALE AGGIUNGI EVENTO -->
   <div class="modal-overlay" id="addModal">
     <div class="modal-content">
       <h3>Nuovo Evento</h3>
@@ -439,7 +425,6 @@
     </div>
   </div>
 
-  <!-- MODALE CONCLUSIONE EVENTO (PAGELLA) -->
   <div class="modal-overlay" id="finishModal">
     <div class="modal-content">
       <h3>Concludi Evento & Ricordi</h3>
@@ -465,8 +450,8 @@
   </div>
 
   <script>
-    // DATA D'INIZIO RELAZIONE (Modificala qui con la vostra data esatta, es: '2024-01-01T00:00:00')
-    const startDate = new Date('2025-01-01T00:00:00');
+    // DATA D'INIZIO RELAZIONE: 18 Febbraio 2025
+    const startDate = new Date('2025-02-18T00:00:00');
 
     function updateLoveCounter() {
       const now = new Date();
@@ -476,11 +461,6 @@
       const seconds = Math.floor(diff / 1000) % 60;
       const minutes = Math.floor(diff / (1000 * 60)) % 60;
       const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
-      
-      // Calcolo approssimativo ma fluido di anni, mesi, giorni
-      const years = now.getFullYear() - startDate.getFullYear();
-      const months = (now.getMonth() - startDate.getMonth() + 12) % 12;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
       document.getElementById('cYears').innerText = Math.max(0, now.getFullYear() - startDate.getFullYear() - (now.getMonth() < startDate.getMonth() || (now.getMonth() === startDate.getMonth() && now.getDate() < startDate.getDate()) ? 1 : 0));
       document.getElementById('cMonths').innerText = Math.abs((now.getMonth() - startDate.getMonth() + 12) % 12);
@@ -492,9 +472,8 @@
     setInterval(updateLoveCounter, 1000);
     updateLoveCounter();
 
-    // GESTIONE EVENTI & LOCALSTORAGE
     let events = JSON.parse(localStorage.getItem('couple_events')) || [];
-    let currentFilter = 'program'; // 'all', 'program', 'concluded'
+    let currentFilter = 'program';
 
     function saveToStorage() {
       localStorage.setItem('couple_events', JSON.stringify(events));
@@ -544,13 +523,12 @@
         date,
         desc,
         img,
-        status: 'program', // 'program' o 'concluded'
+        status: 'program',
         conclusion: { img: '', desc: '', score: 10 }
       };
       events.push(newEv);
       closeAddModal();
       saveToStorage();
-      // Reset form
       document.getElementById('inputTitle').value = '';
       document.getElementById('inputDate').value = '';
       document.getElementById('inputDesc').value = '';
@@ -605,7 +583,6 @@
       if (currentFilter === 'program') filtered = events.filter(e => e.status === 'program');
       if (currentFilter === 'concluded') filtered = events.filter(e => e.status === 'concluded');
 
-      // Ordinamento per data
       filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
       document.getElementById('countAll').innerText = events.length;
 
@@ -642,10 +619,9 @@
           htmlContent += `<p class="event-desc">${ev.desc}</p>`;
           
           if (!isPast) {
-            // Mostra countdown
             const dDays = Math.floor(diff / (1000 * 60 * 60 * 24));
             const dHours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-            const dMins = Math.floor((diff / 1000 * 60) % 60);
+            const dMins = Math.floor((diff / (1000 * 60)) % 60);
             htmlContent += `<div class="countdown-box" id="cd-${ev.id}">Mancano: ${dDays} giorni, ${dHours} ore e ${dMins} min</div>`;
           } else {
             htmlContent += `<div class="countdown-box" style="background:rgba(255, 149, 0, 0.15); color:#ff9500;">✨ Il momento è arrivato!</div>`;
@@ -654,7 +630,6 @@
 
         htmlContent += `</div>`;
 
-        // Pulsanti azione
         htmlContent += `<div class="event-actions">`;
         if (ev.status === 'program') {
           if (isPast) {
@@ -671,9 +646,8 @@
       });
     }
 
-    // Aggiorna i countdown ogni minuto
     setInterval(renderEvents, 60000);
     renderEvents();
   </script>
 </body>
-</html>     
+</html>
