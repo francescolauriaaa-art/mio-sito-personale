@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg: #000000;
-      --card-bg: rgba(28, 28, 30, 0.75);
+      --card-bg: rgba(28, 28, 30, 0.85);
       --card-border: rgba(255, 255, 255, 0.12);
       --text-main: #f5f5f7;
       --text-muted: #86868b;
@@ -215,14 +215,41 @@
       flex-direction: column;
       gap: 12px;
       position: relative;
+    }
+
+    /* Visualizzazione foto intera senza tagli brutti al centro */
+    .photo-container {
+      width: 100%;
+      background: #000;
+      border-radius: 12px;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-height: 280px;
     }
 
     .event-card img.cover {
       width: 100%;
-      height: 160px;
+      height: auto;
+      max-height: 280px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .gallery-thumb {
+      width: 100%;
+      height: 75px;
       object-fit: cover;
-      border-radius: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
     }
 
     .event-info h3 {
@@ -257,6 +284,7 @@
       display: flex;
       gap: 8px;
       margin-top: 4px;
+      flex-wrap: wrap;
     }
 
     .action-btn {
@@ -269,14 +297,16 @@
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
+      text-align: center;
     }
     .action-btn.danger { color: #ff453a; border-color: rgba(255,69,58,0.3); }
     .action-btn.finished { background: #34c759; border: none; color: #000; font-weight: 700; }
+    .action-btn.pdf-btn { background: #0071e3; border: none; color: #fff; font-weight: 700; }
 
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
@@ -399,43 +429,54 @@
     <div id="eventsList"></div>
   </div>
 
+  <!-- MODALE AGGIUNGI / MODIFICA EVENTO -->
   <div class="modal-overlay" id="addModal">
     <div class="modal-content">
-      <h3>Nuovo Evento</h3>
+      <h3 id="modalTitleText">Nuovo Evento</h3>
+      <input type="hidden" id="editEventId">
       <div class="form-group">
         <label>Titolo Evento</label>
-        <input type="text" id="inputTitle" class="form-control" placeholder="Es. Viaggio a Parigi">
+        <input type="text" id="inputTitle" class="form-control" placeholder="Es. Viaggio a Budapest">
       </div>
       <div class="form-group">
-        <label>Data e Ora</label>
+        <label>Data e Ora Inizio</label>
         <input type="datetime-local" id="inputDate" class="form-control">
       </div>
       <div class="form-group">
-        <label>Descrizione</label>
+        <label>Data e Ora Fine (Opzionale)</label>
+        <input type="datetime-local" id="inputEndDate" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Descrizione / Programma</label>
         <textarea id="inputDesc" class="form-control" placeholder="Cosa faremo..."></textarea>
       </div>
       <div class="form-group">
-        <label>Foto principale (Carica immagine)</label>
+        <label>Foto Principale (Copertina)</label>
         <input type="file" id="inputImage" class="form-control" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Altre Foto della Galleria (Puoi sceglierne molteplici)</label>
+        <input type="file" id="inputGallery" class="form-control" accept="image/*" multiple>
       </div>
       <div class="modal-buttons">
         <button class="action-btn" onclick="closeAddModal()">Annulla</button>
-        <button class="action-btn finished" onclick="saveNewEvent()">Salva Evento</button>
+        <button class="action-btn finished" onclick="saveEventData()">Salva Evento</button>
       </div>
     </div>
   </div>
 
+  <!-- MODALE CONCLUSIONE EVENTO (PAGELLA) -->
   <div class="modal-overlay" id="finishModal">
     <div class="modal-content">
       <h3>Concludi Evento & Ricordi</h3>
-      <p style="font-size:0.85rem; color: var(--text-muted);">Inserisci i dettagli finali di questo momento speciale.</p>
+      <p style="font-size:0.85rem; color: var(--text-muted);">Aggiungi i voti e le foto finali di questo momento.</p>
       <input type="hidden" id="finishEventId">
       <div class="form-group">
-        <label>Foto Ricordo Principale</label>
-        <input type="file" id="finishImage" class="form-control" accept="image/*">
+        <label>Altre Foto Aggiuntive per il Ricordo</label>
+        <input type="file" id="finishGallery" class="form-control" accept="image/*" multiple>
       </div>
       <div class="form-group">
-        <label>Descrizione / Racconto dell'esperienza</label>
+        <label>Racconto / Emozioni Finali</label>
         <textarea id="finishDesc" class="form-control" placeholder="Com'è andata? Emozioni..."></textarea>
       </div>
       <div class="form-group">
@@ -450,7 +491,6 @@
   </div>
 
   <script>
-    // DATA D'INIZIO RELAZIONE: 18 Febbraio 2025
     const startDate = new Date('2025-02-18T00:00:00');
 
     function updateLoveCounter() {
@@ -491,48 +531,116 @@
       renderEvents();
     }
 
-    function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+    function openAddModal(id = null) {
+      document.getElementById('editEventId').value = id || '';
+      if (id) {
+        document.getElementById('modalTitleText').innerText = 'Modifica Evento';
+        const ev = events.find(e => e.id === id);
+        if (ev) {
+          document.getElementById('inputTitle').value = ev.title;
+          document.getElementById('inputDate').value = ev.date;
+          document.getElementById('inputEndDate').value = ev.endDate || '';
+          document.getElementById('inputDesc').value = ev.desc;
+        }
+      } else {
+        document.getElementById('modalTitleText').innerText = 'Nuovo Evento';
+        document.getElementById('inputTitle').value = '';
+        document.getElementById('inputDate').value = '';
+        document.getElementById('inputEndDate').value = '';
+        document.getElementById('inputDesc').value = '';
+        document.getElementById('inputImage').value = '';
+        document.getElementById('inputGallery').value = '';
+      }
+      document.getElementById('addModal').classList.add('open');
+    }
     function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
 
-    function saveNewEvent() {
+    function saveEventData() {
+      const editId = document.getElementById('editEventId').value;
       const title = document.getElementById('inputTitle').value;
       const date = document.getElementById('inputDate').value;
+      const endDate = document.getElementById('inputEndDate').value;
       const desc = document.getElementById('inputDesc').value;
-      const fileInput = document.getElementById('inputImage');
+      const mainImgInput = document.getElementById('inputImage');
+      const galleryInput = document.getElementById('inputGallery');
 
       if (!title || !date) {
-        alert('Inserisci almeno titolo e data!');
+        alert('Inserisci almeno titolo e data di inizio!');
         return;
       }
 
-      if (fileInput.files && fileInput.files[0]) {
+      // Gestione caricamento immagini multiple e principale
+      processImagesAndSave(editId, title, date, endDate, desc, mainImgInput, galleryInput);
+    }
+
+    function processImagesAndSave(editId, title, date, endDate, desc, mainImgInput, galleryInput) {
+      let mainImg = '';
+      if (editId) {
+        const existing = events.find(e => e.id == editId);
+        if (existing) mainImg = existing.img;
+      }
+
+      const saveFinal = (finalMainImg, newGalleryArr) => {
+        if (editId) {
+          const ev = events.find(e => e.id == editId);
+          if (ev) {
+            ev.title = title;
+            ev.date = date;
+            ev.endDate = endDate;
+            ev.desc = desc;
+            if (finalMainImg) ev.img = finalMainImg;
+            if (newGalleryArr.length > 0) {
+              ev.gallery = ev.gallery ? ev.gallery.concat(newGalleryArr) : newGalleryArr;
+            }
+          }
+        } else {
+          const newEv = {
+            id: Date.now(),
+            title,
+            date,
+            endDate,
+            desc,
+            img: finalMainImg,
+            gallery: newGalleryArr,
+            status: 'program',
+            conclusion: { gallery: [], desc: '', score: 10 }
+          };
+          events.push(newEv);
+        }
+        closeAddModal();
+        saveToStorage();
+      };
+
+      // Leggi copertina se inserita
+      if (mainImgInput.files && mainImgInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          createEventObj(title, date, desc, e.target.result);
+          const resMain = e.target.result;
+          readGallery(galleryInput, (galArr) => saveFinal(resMain, galArr));
         };
-        reader.readAsDataURL(fileInput.files[0]);
+        reader.readAsDataURL(mainImgInput.files[0]);
       } else {
-        createEventObj(title, date, desc, '');
+        readGallery(galleryInput, (galArr) => saveFinal(mainImg, galArr));
       }
     }
 
-    function createEventObj(title, date, desc, img) {
-      const newEv = {
-        id: Date.now(),
-        title,
-        date,
-        desc,
-        img,
-        status: 'program',
-        conclusion: { img: '', desc: '', score: 10 }
-      };
-      events.push(newEv);
-      closeAddModal();
-      saveToStorage();
-      document.getElementById('inputTitle').value = '';
-      document.getElementById('inputDate').value = '';
-      document.getElementById('inputDesc').value = '';
-      document.getElementById('inputImage').value = '';
+    function readGallery(input, callback) {
+      if (!input.files || input.files.length === 0) {
+        callback([]);
+        return;
+      }
+      let files = Array.from(input.files);
+      let results = [];
+      let loaded = 0;
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          results[index] = e.target.result;
+          loaded++;
+          if (loaded === files.length) callback(results);
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     function deleteEvent(id) {
@@ -552,27 +660,99 @@
       const id = Number(document.getElementById('finishEventId').value);
       const desc = document.getElementById('finishDesc').value;
       const score = document.getElementById('finishScore').value;
-      const fileInput = document.getElementById('finishImage');
+      const galleryInput = document.getElementById('finishGallery');
 
       const ev = events.find(e => e.id === id);
       if (!ev) return;
 
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          finalizeEventData(ev, desc, score, e.target.result);
+      readGallery(galleryInput, (galArr) => {
+        ev.status = 'concluded';
+        ev.conclusion = {
+          desc,
+          score,
+          gallery: ev.conclusion && ev.conclusion.gallery ? ev.conclusion.gallery.concat(galArr) : galArr
         };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        finalizeEventData(ev, desc, score, ev.img);
-      }
+        closeFinishModal();
+        saveToStorage();
+      });
     }
 
-    function finalizeEventData(ev, desc, score, img) {
-      ev.status = 'concluded';
-      ev.conclusion = { desc, score, img };
-      closeFinishModal();
-      saveToStorage();
+    // GENERATORE PDF STILE APPLE
+    function generatePDF(id) {
+      const ev = events.find(e => e.id === id);
+      if (!ev) return;
+
+      let win = window.open('', '_blank');
+      let html = `
+        <!DOCTYPE html>
+        <html lang="it">
+        <head>
+          <meta charset="UTF-8">
+          <title>Ricordo - ${ev.title}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; color: #111; padding: 40px; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+            h1 { font-size: 28px; margin-bottom: 5px; }
+            .date { color: #666; font-size: 14px; margin-bottom: 20px; }
+            .section { margin-top: 25px; }
+            .section h3 { font-size: 16px; text-transform: uppercase; color: #888; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; }
+            p { font-size: 16px; color: #333; }
+            .score { display: inline-block; background: #34c759; color: #fff; font-weight: bold; padding: 6px 14px; border-radius: 8px; font-size: 16px; margin-top: 10px; }
+            .main-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 12px; margin-bottom: 15px; background: #f5f5f7; }
+            .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+            .grid img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <h1>${ev.title}</h1>
+          <div class="date">📅 Inizio: ${new Date(ev.date).toLocaleString('it-IT')} ${ev.endDate ? ' | Fine: ' + new Date(ev.endDate).toLocaleString('it-IT') : ''}</div>
+      `;
+
+      if (ev.img) {
+        html += `<img src="${ev.img}" class="main-img">`;
+      }
+
+      html += `
+          <div class="section">
+            <h3>Programma / Descrizione Iniziale</h3>
+            <p>${ev.desc || 'Nessuna descrizione.'}</p>
+          </div>
+      `;
+
+      if (ev.status === 'concluded') {
+        html += `
+          <div class="section">
+            <h3>Racconto dell'Esperienza</h3>
+            <p>${ev.conclusion.desc || 'Nessun racconto inserito.'}</p>
+            <div class="score">Voto: ${ev.conclusion.score} / 10 ⭐</div>
+          </div>
+        `;
+      }
+
+      // Unisci tutte le gallerie foto
+      let allPhotos = [];
+      if (ev.gallery) allPhotos = allPhotos.concat(ev.gallery);
+      if (ev.status === 'concluded' && ev.conclusion.gallery) {
+        allPhotos = allPhotos.concat(ev.conclusion.gallery);
+      }
+
+      if (allPhotos.length > 0) {
+        html += `<div class="section"><h3>Galleria Ricordi</h3><div class="grid">`;
+        allPhotos.forEach(p => {
+          html += `<img src="${p}">`;
+        });
+        html += `</div></div>`;
+      }
+
+      html += `
+        <script>
+          window.onload = function() { window.print(); }
+        <\/script>
+        </body>
+        </html>
+      `;
+      win.document.write(html);
+      win.document.close();
     }
 
     function renderEvents() {
@@ -601,43 +781,59 @@
         const card = document.createElement('div');
         card.className = 'event-card';
 
-        let displayImage = ev.status === 'concluded' ? (ev.conclusion.img || ev.img) : ev.img;
         let htmlContent = '';
 
-        if (displayImage) {
-          htmlContent += `<img src="${displayImage}" class="cover" alt="Foto evento">`;
+        // Foto principale pulita senza tagli centrali forzati
+        if (ev.img) {
+          htmlContent += `<div class="photo-container"><img src="${ev.img}" class="cover" alt="Copertina"></div>`;
         }
 
         htmlContent += `<div class="event-info">`;
         htmlContent += `<h3>${ev.title}</h3>`;
-        htmlContent += `<div class="event-date">📅 ${new Date(ev.date).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' })}</div>`;
+        htmlContent += `<div class="event-date">📅 ${new Date(ev.date).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' })}${ev.endDate ? ' ➔ ' + new Date(ev.endDate).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' }) : ''}</div>`;
         
         if (ev.status === 'concluded') {
           htmlContent += `<p class="event-desc"><strong>Racconto:</strong> ${ev.conclusion.desc || ev.desc}</p>`;
-          htmlContent += `<div style="margin-top:8px;"><span class="badge-score">Voto: ${ev.conclusion.score}/10 ⭐</span></div>`;
+          htmlContent += `<div style="margin-top:8px; display:flex; gap:10px; align-items:center;"><span class="badge-score">Voto: ${ev.conclusion.score}/10 ⭐</span></div>`;
         } else {
           htmlContent += `<p class="event-desc">${ev.desc}</p>`;
-          
           if (!isPast) {
             const dDays = Math.floor(diff / (1000 * 60 * 60 * 24));
             const dHours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const dMins = Math.floor((diff / (1000 * 60)) % 60);
-            htmlContent += `<div class="countdown-box" id="cd-${ev.id}">Mancano: ${dDays} giorni, ${dHours} ore e ${dMins} min</div>`;
+            htmlContent += `<div class="countdown-box">Mancano: ${dDays} giorni, ${dHours} ore e ${dMins} min</div>`;
           } else {
             htmlContent += `<div class="countdown-box" style="background:rgba(255, 149, 0, 0.15); color:#ff9500;">✨ Il momento è arrivato!</div>`;
           }
         }
 
+        // Galleria miniature foto extra
+        let allGal = ev.gallery || [];
+        if (ev.status === 'concluded' && ev.conclusion.gallery) {
+          allGal = allGal.concat(ev.conclusion.gallery);
+        }
+        if (allGal.length > 0) {
+          htmlContent += `<div class="gallery-grid">`;
+          allGal.forEach(photo => {
+            htmlContent += `<img src="${photo}" class="gallery-thumb">`;
+          });
+          htmlContent += `</div>`;
+        }
+
         htmlContent += `</div>`;
 
+        // Pulsanti azione
         htmlContent += `<div class="event-actions">`;
+        htmlContent += `<button class="action-btn" onclick="openAddModal(${ev.id})">Modifica</button>`;
+        
         if (ev.status === 'program') {
           if (isPast) {
             htmlContent += `<button class="action-btn finished" onclick="openFinishModal(${ev.id})">Finito ✔</button>`;
           }
           htmlContent += `<button class="action-btn danger" onclick="deleteEvent(${ev.id})">Elimina</button>`;
         } else {
-          htmlContent += `<button class="action-btn danger" onclick="deleteEvent(${ev.id})">Elimina Ricordo</button>`;
+          htmlContent += `<button class="action-btn pdf-btn" onclick="generatePDF(${ev.id})">Crea Ricordo PDF 📄</button>`;
+          htmlContent += `<button class="action-btn danger" onclick="deleteEvent(${ev.id})">Elimina</button>`;
         }
         htmlContent += `</div>`;
 
